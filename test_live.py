@@ -31,17 +31,12 @@ def detect_room(room_number: int):
     detected_amount = len(detections)
 
     if detected_amount > 0:
-        print("HUMAN FOUND")
+        # Human detected
         with Session(engine) as session:
             if room := session.query(Room).where(Room.id == room_number).first():
                 room.human_count = detected_amount
             else:
-                session.add(
-                    Room(
-                        id=room_number,
-                        human_count=detected_amount
-                    )
-                )
+                session.add(Room(id=room_number, human_count=detected_amount))
             session.commit()
 
     # Annotate the image
