@@ -11,7 +11,7 @@ bounding_box_annotator = sv.BoundingBoxAnnotator()
 label_annotator = sv.LabelAnnotator()
 
 # Start the webcam
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 selected_classes = [0]
 
@@ -26,6 +26,8 @@ while True:
     # Apply Filters
     detections = detections[np.isin(detections.class_id, selected_classes)]
     detections = detections[detections.confidence > 0.5]
+    detections = detections[detections.class_id == selected_classes]
+    print(len(detections))
 
     labels = [
         model.model.names[class_id]
