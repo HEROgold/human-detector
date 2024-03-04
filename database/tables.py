@@ -1,10 +1,8 @@
-from datetime import datetime
 import logging
 
 import sqlalchemy
 from sqlalchemy import (
     BigInteger,
-    DateTime,
     Integer
 )
 from sqlalchemy.orm import (
