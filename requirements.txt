@@ -1,3 +1,4 @@
 opencv-python==4.9.0.80
 supervision[desktop]==0.18.0
 ultralytics==8.1.22s
+sqlalchemy==2.0.27
