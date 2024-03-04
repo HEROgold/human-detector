@@ -25,7 +25,7 @@ while True:
 
     # Apply Filters
     detections = detections[np.isin(detections.class_id, selected_classes)]
-    detections = detections[detections.confidence > 0.5]
+    detections = detections[detections.confidence > 0.7]
     detections = detections[detections.class_id == selected_classes]
     print(len(detections))
 
