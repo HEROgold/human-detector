@@ -4,7 +4,8 @@ import logging
 import sqlalchemy
 from sqlalchemy import (
     BigInteger,
-    DateTime
+    DateTime,
+    Integer
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -34,7 +35,7 @@ class Room(Base):
     __tablename__ = "room"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    human_count: Mapped[datetime] = mapped_column(DateTime)
+    human_count: Mapped[int] = mapped_column(Integer)
 
 
 all_tables = Base.__subclasses__()

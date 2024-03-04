@@ -1,7 +1,13 @@
+import datetime
+import random
+import time
 import cv2
 import numpy as np
 import supervision as sv
 from ultralytics import YOLO
+import sqlite3
+
+from database.tables import Room, Session, engine
 
 # Initialize the model, don't output processing speed
 model = YOLO("yolov8n.pt", verbose=False)
@@ -11,9 +17,10 @@ bounding_box_annotator = sv.BoundingBoxAnnotator()
 label_annotator = sv.LabelAnnotator()
 
 # Start the webcam
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 selected_classes = [0]
+room_number = 0
 
 while True:
     # Capture frame-by-frame
@@ -27,7 +34,7 @@ while True:
     detections = detections[np.isin(detections.class_id, selected_classes)]
     detections = detections[detections.confidence > 0.7]
     detections = detections[detections.class_id == selected_classes]
-    print(len(detections))
+    detected_amount = len(detections)
 
     labels = [
         model.model.names[class_id]
@@ -43,6 +50,19 @@ while True:
 
     if labels_with_confidence:
         print("HUMAN FOUND")
+        with Session(engine) as session:
+            if room := session.query(Room).where(Room.id == room_number).first():
+                room.human_count = detected_amount
+            else:
+                session.add(
+                    Room(
+                        id=room_number,
+                        human_count=detected_amount
+                    )
+                )
+            session.commit()
+
+        # time.sleep(5)
 
     # Annotate the image
     annotated_image = bounding_box_annotator.annotate(
