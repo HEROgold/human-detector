@@ -1,28 +1,22 @@
-import datetime
-import random
-import time
 import cv2
 import numpy as np
 import supervision as sv
 from ultralytics import YOLO
-import sqlite3
 
 from database.tables import Room, Session, engine
 
-# Initialize the model, don't output processing speed
+SHOW_VIDEO = False
 model = YOLO("yolov8n.pt", verbose=False)
-
-# Initialize the annotators
 bounding_box_annotator = sv.BoundingBoxAnnotator()
 label_annotator = sv.LabelAnnotator()
+selected_classes = [0] # see https://stackoverflow.com/a/77479465
 
-# Start the webcam
-cap = cv2.VideoCapture(1)
+rooms_to_check = [
+    0
+]
 
-selected_classes = [0]
-room_number = 0
-
-while True:
+def detect_room(room_number: int):
+    cap = cv2.VideoCapture(0)
     # Capture frame-by-frame
     ret, frame = cap.read()
 
@@ -36,19 +30,7 @@ while True:
     detections = detections[detections.class_id == selected_classes]
     detected_amount = len(detections)
 
-    labels = [
-        model.model.names[class_id]
-        for class_id
-        in detections.class_id
-    ]
-
-    labels_with_confidence = [
-        f"{label}: {confidence:.2f}"
-        for label, confidence
-        in zip(labels, detections.confidence)
-    ]
-
-    if labels_with_confidence:
+    if detected_amount > 0:
         print("HUMAN FOUND")
         with Session(engine) as session:
             if room := session.query(Room).where(Room.id == room_number).first():
@@ -62,26 +44,33 @@ while True:
                 )
             session.commit()
 
-        # time.sleep(5)
-
     # Annotate the image
-    annotated_image = bounding_box_annotator.annotate(
-        scene=frame,
-        detections=detections,
-    )
-    annotated_image = label_annotator.annotate(
-        scene=annotated_image,
-        detections=detections,
-        labels=labels_with_confidence,
-    )
+    if SHOW_VIDEO:
+        labels = [
+            model.model.names[class_id]
+            for class_id
+            in detections.class_id
+        ]
 
-    # Display the resulting frame
-    cv2.imshow('frame', annotated_image)
+        labels_with_confidence = [
+            f"{label}: {confidence:.2f}"
+            for label, confidence
+            in zip(labels, detections.confidence)
+        ]
 
-    # Break the loop on 'q' key press
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        annotated_image = bounding_box_annotator.annotate(
+            scene=frame,
+            detections=detections,
+        )
+        annotated_image = label_annotator.annotate(
+            scene=annotated_image,
+            detections=detections,
+            labels=labels_with_confidence,
+        )
+
+        # Display the resulting frame
+        cv2.imshow('frame', annotated_image)
+    cap.release()
 
 # When everything done, release the capture
-cap.release()
 cv2.destroyAllWindows()
