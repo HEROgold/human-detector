@@ -33,7 +33,7 @@ class Room(Base):
     __tablename__ = "room"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    human_count: Mapped[int] = mapped_column(Integer)
+    human_count: Mapped[int] = mapped_column(Integer, default=0)
 
 
 all_tables = Base.__subclasses__()
