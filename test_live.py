@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import supervision as sv
 from ultralytics import YOLO
+import time
+import sqlite3
 
 # Initialize the model, don't output processing speed
 model = YOLO("yolov8n.pt", verbose=False)
@@ -55,6 +57,7 @@ while True:
         labels=labels_with_confidence,
     )
 
+    time.sleep(1)
     # Display the resulting frame
     cv2.imshow('frame', annotated_image)
 
