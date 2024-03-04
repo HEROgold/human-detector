@@ -7,13 +7,13 @@ from ultralytics import YOLO
 from database.tables import Room, Session, engine
 
 SHOW_VIDEO = True
-DETECT_COOLDOWN_PERIOD = 60
+DETECT_COOLDOWN_PERIOD = 0
 
 model = YOLO("yolov8n.pt", verbose=False)
 bounding_box_annotator = sv.BoundingBoxAnnotator()
 label_annotator = sv.LabelAnnotator()
 selected_classes = [0] # see https://stackoverflow.com/a/77479465
-rooms_to_check = [0, 1, 2, 3]
+rooms_to_check = [1]
 room_cooldown = {}
 
 
@@ -75,7 +75,7 @@ def detect_room(target_number: int):
 
         # Display the resulting frame
         cv2.imshow('frame', annotated_image)
-    
+        cv2.waitKey(0)
     cap.release()
 
 
