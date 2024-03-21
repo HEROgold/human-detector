@@ -59,7 +59,7 @@ while True:
 
     time.sleep(1)
     # Display the resulting frame
-    cv2.imshow('frame', annotated_image)
+    cv2.imshow('Human reconition', annotated_image)
 
     # Break the loop on 'q' key press
     if cv2.waitKey(1) & 0xFF == ord('q'):
