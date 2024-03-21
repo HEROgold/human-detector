@@ -1,9 +1,10 @@
+import datetime
 import logging
 
 import sqlalchemy
 from sqlalchemy import (
-    BigInteger,
-    Integer
+    Integer,
+    DateTime
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -32,8 +33,17 @@ class Base(DeclarativeBase):
 class Room(Base):
     __tablename__ = "room"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    room_id: Mapped[int] = mapped_column(Integer)
     human_count: Mapped[int] = mapped_column(Integer, default=0)
+    timestamp: Mapped[datetime.datetime] = mapped_column(DateTime)
+
+
+    @classmethod
+    def add_counter(cls, room_id: int, count: int) -> None:
+        with Session(engine) as session:
+            session.add(cls(room_id=room_id, human_count=count, timestamp=datetime.datetime.now()))
+            session.commit()
 
 
 all_tables = Base.__subclasses__()

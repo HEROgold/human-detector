@@ -50,12 +50,7 @@ def detect_room(target_number: int):
 
     if detected_amount > 0:
         # Human detected
-        with Session(engine) as session:
-            if room := session.query(Room).where(Room.id == target_number).first():
-                room.human_count = detected_amount
-            else:
-                session.add(Room(id=target_number, human_count=detected_amount))
-            session.commit()
+        Room.add_counter(room_id=target_number, count=detected_amount)
 
     # Annotate the image
     if SHOW_VIDEO:
@@ -80,6 +75,9 @@ def detect_room(target_number: int):
             detections=detections,
             labels=labels_with_confidence,
         )
+
+        height, width, _ = frame.shape
+        middle_y = height // 2
 
         # Display the resulting frame
         cv2.line(annotated_image, (0, middle_y), (width, middle_y), (255, 0, 0), 5)
