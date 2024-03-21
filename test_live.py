@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import cv2
 import keyboard
 import numpy as np
@@ -141,24 +141,7 @@ def detect_room(target_number: int):
     # cap.release()
 
 
-def reset_cooldown():
-    """
-    Reset the cooldown variable to 0 in datetime
-    """
-    for target in camera_indexes:
-        room_cooldown[target] = datetime.fromtimestamp(0)
-
-
-def on_cooldown(target: int):
-    return room_cooldown[target] + timedelta(seconds=DETECT_COOLDOWN_PERIOD) >= datetime.now()
-
-
-def set_cooldown(target: int):
-    room_cooldown[target] = datetime.now()
-
-
 def main() -> None:
-    reset_cooldown()
     run = True
 
     while run:
@@ -167,10 +150,7 @@ def main() -> None:
             break
 
         for target in camera_indexes:
-            if on_cooldown(target):
-                continue
             detect_room(target)
-            set_cooldown(target)
 
     # When everything done, release the capture
     for cap in captures.values():
