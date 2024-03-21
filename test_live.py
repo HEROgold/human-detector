@@ -8,6 +8,7 @@ from ultralytics import YOLO
 from database.tables import Room, Session, engine
 
 SHOW_VIDEO = True
+TRACKER = False
 DETECT_COOLDOWN_PERIOD = 0
 camera_indexes = [0]
 
@@ -18,6 +19,8 @@ label_annotator = sv.LabelAnnotator()
 selected_classes = [0] # see https://stackoverflow.com/a/77479465
 room_cooldown: dict[str, datetime] = {}
 captures: dict[int, cv2.VideoCapture] = {}
+tracker = cv2.TrackerMIL.create()
+tracker_initialized = False
 
 
 def detect_room(target_number: int):
@@ -46,11 +49,37 @@ def detect_room(target_number: int):
     detections = detections[np.isin(detections.class_id, selected_classes)]
     detections = detections[detections.confidence > 0.7]
     detections = detections[detections.class_id == selected_classes]
+    detections: sv.Detections
     detected_amount = len(detections)
 
     if detected_amount > 0:
         # Human detected
         Room.add_counter(room_id=target_number, count=detected_amount)
+
+    if TRACKER:
+        for bbox in detections.xyxy:
+            # roi = cv2.selectROI(frame, True)
+            bbox: cv2.typing.Rect = [bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]]
+
+            if tracker_initialized is False:
+                # Initialize tracker with first frame and bounding box
+                ok = tracker.init(frame, bbox)
+                # tracker_initialized = True
+            else:
+                # Initialize tracker with first frame and bounding box
+                ok = tracker.init(frame, bbox)
+
+            # Update tracker
+            ok, bbox = tracker.update(frame)
+
+            if ok:
+                # Tracking success: Draw the tracked object
+                p1 = (int(bbox[0]), int(bbox[1]))
+                p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
+                cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
+            else :
+                # Tracking failure
+                cv2.putText(frame, "Tracking failure detected", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
 
     # Annotate the image
     if SHOW_VIDEO:
