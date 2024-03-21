@@ -10,7 +10,7 @@ from database.tables import Room
 SHOW_VIDEO = True
 TRACKER = True
 DETECT_COOLDOWN_PERIOD = 0
-camera_indexes = ["samples/645844445.mp4"]
+videos_or_cameras = ["samples/645844445.mp4"]
 
 # set up some settings
 model = YOLO("yolov8n.pt", verbose=False)
@@ -160,7 +160,7 @@ def main() -> None:
             run = False
             break
 
-        for target in camera_indexes:
+        for target in videos_or_cameras:
             detect_room(target)
 
     # When everything done, release the capture
