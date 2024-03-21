@@ -9,7 +9,7 @@ from database.tables import Room, Session, engine
 
 SHOW_VIDEO = True
 DETECT_COOLDOWN_PERIOD = 0
-rooms_to_check = [0]
+camera_indexes = [0]
 
 # set up some settings
 model = YOLO("yolov8n.pt", verbose=False)
@@ -94,7 +94,7 @@ def reset_cooldown():
     """
     Reset the cooldown variable to 0 in datetime
     """
-    for target in rooms_to_check:
+    for target in camera_indexes:
         room_cooldown[target] = datetime.fromtimestamp(0)
 
 
@@ -115,7 +115,7 @@ def main() -> None:
             run = False
             break
 
-        for target in rooms_to_check:
+        for target in camera_indexes:
             if on_cooldown(target):
                 continue
             detect_room(target)
