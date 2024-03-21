@@ -9,13 +9,15 @@ from database.tables import Room, Session, engine
 
 SHOW_VIDEO = True
 DETECT_COOLDOWN_PERIOD = 0
+rooms_to_check = [0]
 
+# set up some settings
 model = YOLO("yolov8n.pt", verbose=False)
 bounding_box_annotator = sv.BoundingBoxAnnotator()
 label_annotator = sv.LabelAnnotator()
 selected_classes = [0] # see https://stackoverflow.com/a/77479465
-rooms_to_check = [0]
 room_cooldown: dict[str, datetime] = {}
+captures: dict[int, cv2.VideoCapture] = {}
 
 
 def detect_room(target_number: int):
@@ -27,7 +29,11 @@ def detect_room(target_number: int):
     target_number: int
         room or camera number to detect
     """
-    cap = cv2.VideoCapture(target_number)
+
+    if target_number in captures:
+        cap = captures[target_number]
+    else:
+        cap = captures[target_number] = cv2.VideoCapture(target_number)
 
     # Capture frame-by-frame
     ret, frame = cap.read()
@@ -81,7 +87,7 @@ def detect_room(target_number: int):
         # Break the loop on 'q' key press
         if cv2.waitKey(1) & 0xFF == ord('q'):
             return
-    cap.release()
+    # cap.release()
 
 
 def reset_cooldown():
@@ -110,12 +116,14 @@ def main() -> None:
             break
 
         for target in rooms_to_check:
-            # if on_cooldown(target):
-            #     continue
+            if on_cooldown(target):
+                continue
             detect_room(target)
-            # set_cooldown(target)
+            set_cooldown(target)
 
     # When everything done, release the capture
+    for cap in captures.values():
+        cap.release()
     cv2.destroyAllWindows()
 
 
