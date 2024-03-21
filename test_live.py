@@ -10,7 +10,7 @@ from database.tables import Room
 SHOW_VIDEO = True
 TRACKER = True
 DETECT_COOLDOWN_PERIOD = 0
-camera_indexes = [0]
+camera_indexes = ["samples/645844445.mp4"]
 
 # set up some settings
 model = YOLO("yolov8n.pt", verbose=False)
@@ -25,7 +25,7 @@ captures: dict[int, cv2.VideoCapture] = {}
 tracker_initialized = False
 
 
-def detect_room(target_number: int):
+def detect_room(target_number: int | str):
     """
     Detects the amount of ppl in a given room/camera, and updates the corresponding database table
     
@@ -34,9 +34,6 @@ def detect_room(target_number: int):
     target_number: int
         room or camera number to detect
     """
-    global tracker_initialized
-    tracker_initialized = tracker_initialized or False
-
     if target_number in captures:
         cap = captures[target_number]
     else:
@@ -51,7 +48,7 @@ def detect_room(target_number: int):
 
     # Apply Filters
     detections = detections[np.isin(detections.class_id, selected_classes)]
-    detections = detections[detections.confidence > 0.7]
+    # detections = detections[detections.confidence > 0.7]
     detections = detections[detections.class_id == selected_classes]
     detections: sv.Detections
     detected_amount = len(detections)
@@ -60,50 +57,22 @@ def detect_room(target_number: int):
         # Human detected
         Room.add_counter(room_id=target_number, count=detected_amount)
 
-    if TRACKER:
-        for bbox in detections.xyxy.tolist():
-            # roi = cv2.selectROI(frame, True)
-            x1, y1, x2, y2 = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
-            w, h = x2 - x1, y2 - y1
+        annotated_image = annotate_frame(frame, detections)
+        track_detections(frame, detections)
+        draw_middle_line(frame, annotated_image)
 
-            # Validate the bounding box
-            if (
-                x1 < 0 
-                or y1 < 0 
-                or w <= 0 
-                or h <= 0
-                or x2 <= 0
-                or y2 <= 0
-            ):
-                continue
+        # Display the resulting frame
+        cv2.imshow('IT Hub Human Recognition Frame', annotated_image)
+        cv2.waitKey(1)
 
-            if tracker_initialized is False:
-                # Initialize tracker with first frame and bounding box
-                ok = tracker.init(frame, [x1, y1, w, h])
-                tracker_initialized = True
-            else:
-                ok = tracker.update(frame)
 
-            if ok:
-                # Tracking success: Draw the tracked object
-                if SHOW_VIDEO:
-                    cv2.imshow(
-                        'Tracked Human',
-                        cv2.rectangle(
-                            frame,
-                            (int(bbox[0]), int(bbox[1])),
-                            (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])),
-                            (255,125,0),
-                            2,
-                            1
-                        )
-                    )
-                print("Tracking success")
-            else:
-                # Tracking failure
-                # cv2.putText(frame, "Tracking failure detected", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-                print("Tracking failure")
+def draw_middle_line(frame: cv2.typing.MatLike, annotated_image: np.ndarray):
+    height, width, _ = frame.shape
+    middle_y = height // 2
+    cv2.line(annotated_image, (0, middle_y), (width, middle_y), (255, 0, 0), 5)
 
+
+def annotate_frame(frame: cv2.typing.MatLike, detections: sv.Detections) -> np.ndarray:
     # Annotate the image
     if SHOW_VIDEO:
         labels = [
@@ -128,17 +97,59 @@ def detect_room(target_number: int):
             labels=labels_with_confidence,
         )
 
-        height, width, _ = frame.shape
-        middle_y = height // 2
+        return annotated_image
 
-        # Display the resulting frame
-        cv2.line(annotated_image, (0, middle_y), (width, middle_y), (255, 0, 0), 5)
-        cv2.imshow('IT Hub Human Recognition Frame', annotated_image)
-        
-        # Break the loop on 'q' key press
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            return
-    # cap.release()
+
+def track_detections(frame: cv2.typing.MatLike, detections: sv.Detections):
+    global tracker_initialized
+    tracker_initialized = tracker_initialized or False
+
+    if TRACKER:
+        for i, bbox in enumerate(detections.xyxy.tolist()):
+            # roi = cv2.selectROI(frame, True)
+            x1, y1, x2, y2 = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+            w, h = x2 - x1, y2 - y1
+
+            # Validate the bounding box
+            if (
+                x1 < 0 
+                or y1 < 0 
+                or w <= 0 
+                or h <= 0
+                or x2 <= 0
+                or y2 <= 0
+            ):
+                continue
+
+            if tracker_initialized is False:
+                # Initialize tracker with first frame and bounding box
+                ok = tracker.init(frame, [x1, y1, w, h])
+                tracker_initialized = True
+            else:
+                ok = tracker.update(frame)
+
+            if ok:
+                cv2.putText(
+                    frame,
+                    f"tracking {i}",
+                    (x1, y1-30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75,(0,0,255),
+                    2
+                )
+                cv2.rectangle(
+                    frame,
+                    (x1, y1),
+                    (x2, y2+10), # Add +10 to either x2 or y2 to visualize the tracking box
+                    (255,125,0),
+                    2,
+                    1
+                )
+                # print("Tracking success")
+            else:
+                # Tracking failure
+                # cv2.putText(frame, "Tracking failure detected", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
+                print("Tracking failure")
 
 
 def main() -> None:
