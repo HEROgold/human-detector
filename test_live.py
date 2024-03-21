@@ -82,7 +82,8 @@ def detect_room(target_number: int):
         )
 
         # Display the resulting frame
-        cv2.imshow('IT Hub Human Reconition Frame', annotated_image)
+        cv2.line(annotated_image, (0, middle_y), (width, middle_y), (255, 0, 0), 5)
+        cv2.imshow('IT Hub Human Recognition Frame', annotated_image)
         
         # Break the loop on 'q' key press
         if cv2.waitKey(1) & 0xFF == ord('q'):
