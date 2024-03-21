@@ -5,10 +5,10 @@ import numpy as np
 import supervision as sv
 from ultralytics import YOLO
 
-from database.tables import Room, Session, engine
+from database.tables import Room
 
 SHOW_VIDEO = True
-TRACKER = False
+TRACKER = True
 DETECT_COOLDOWN_PERIOD = 0
 camera_indexes = [0]
 
@@ -16,10 +16,12 @@ camera_indexes = [0]
 model = YOLO("yolov8n.pt", verbose=False)
 bounding_box_annotator = sv.BoundingBoxAnnotator()
 label_annotator = sv.LabelAnnotator()
+tracker = cv2.TrackerMIL.create()
 selected_classes = [0] # see https://stackoverflow.com/a/77479465
+
+# Empty things for storage
 room_cooldown: dict[str, datetime] = {}
 captures: dict[int, cv2.VideoCapture] = {}
-tracker = cv2.TrackerMIL.create()
 tracker_initialized = False
 
 
@@ -32,6 +34,8 @@ def detect_room(target_number: int):
     target_number: int
         room or camera number to detect
     """
+    global tracker_initialized
+    tracker_initialized = tracker_initialized or False
 
     if target_number in captures:
         cap = captures[target_number]
@@ -57,29 +61,48 @@ def detect_room(target_number: int):
         Room.add_counter(room_id=target_number, count=detected_amount)
 
     if TRACKER:
-        for bbox in detections.xyxy:
+        for bbox in detections.xyxy.tolist():
             # roi = cv2.selectROI(frame, True)
-            bbox: cv2.typing.Rect = [bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]]
+            x1, y1, x2, y2 = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+            w, h = x2 - x1, y2 - y1
+
+            # Validate the bounding box
+            if (
+                x1 < 0 
+                or y1 < 0 
+                or w <= 0 
+                or h <= 0
+                or x2 <= 0
+                or y2 <= 0
+            ):
+                continue
 
             if tracker_initialized is False:
                 # Initialize tracker with first frame and bounding box
-                ok = tracker.init(frame, bbox)
-                # tracker_initialized = True
+                ok = tracker.init(frame, [x1, y1, w, h])
+                tracker_initialized = True
             else:
-                # Initialize tracker with first frame and bounding box
-                ok = tracker.init(frame, bbox)
-
-            # Update tracker
-            ok, bbox = tracker.update(frame)
+                ok = tracker.update(frame)
 
             if ok:
                 # Tracking success: Draw the tracked object
-                p1 = (int(bbox[0]), int(bbox[1]))
-                p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
-                cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
-            else :
+                if SHOW_VIDEO:
+                    cv2.imshow(
+                        'Tracked Human',
+                        cv2.rectangle(
+                            frame,
+                            (int(bbox[0]), int(bbox[1])),
+                            (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])),
+                            (255,125,0),
+                            2,
+                            1
+                        )
+                    )
+                print("Tracking success")
+            else:
                 # Tracking failure
-                cv2.putText(frame, "Tracking failure detected", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
+                # cv2.putText(frame, "Tracking failure detected", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
+                print("Tracking failure")
 
     # Annotate the image
     if SHOW_VIDEO:
