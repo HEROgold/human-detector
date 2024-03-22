@@ -10,7 +10,7 @@ from database.tables import Room
 SHOW_VIDEO = True
 TRACKER = True
 DETECT_COOLDOWN_PERIOD = 0
-videos_or_cameras = ["samples/645844445.mp4"]
+videos_or_cameras = [0]
 
 # set up some settings
 model = YOLO("yolov8n.pt", verbose=False)
@@ -106,6 +106,9 @@ def track_detections(frame: cv2.typing.MatLike, detections: sv.Detections):
 
     if TRACKER:
         for i, bbox in enumerate(detections.xyxy.tolist()):
+            if i > 0:
+                break
+
             # roi = cv2.selectROI(frame, True)
             x1, y1, x2, y2 = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
             w, h = x2 - x1, y2 - y1
@@ -123,24 +126,25 @@ def track_detections(frame: cv2.typing.MatLike, detections: sv.Detections):
 
             if tracker_initialized is False:
                 # Initialize tracker with first frame and bounding box
-                ok = tracker.init(frame, [x1, y1, w, h])
+                track = tracker.init(frame, [x1, y1, w, h])
                 tracker_initialized = True
             else:
-                ok = tracker.update(frame)
+                track = tracker.update(frame)
 
-            if ok:
+            if track:
+                rect = track[1]
                 cv2.putText(
                     frame,
                     f"tracking {i}",
-                    (x1, y1-30),
+                    (rect[0], rect[1]),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.75,(0,0,255),
                     2
                 )
                 cv2.rectangle(
                     frame,
-                    (x1, y1),
-                    (x2, y2+10), # Add +10 to either x2 or y2 to visualize the tracking box
+                    (rect[0], rect[1]),
+                    (rect[2], rect[3]), # Add +10 to either x2 or y2 to visualize the tracking box
                     (255,125,0),
                     2,
                     1
