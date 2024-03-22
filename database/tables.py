@@ -45,6 +45,10 @@ class Room(Base):
             session.add(cls(room_id=room_id, human_count=count, timestamp=datetime.datetime.now()))
             session.commit()
 
+    def clear_older_than(self, days: int) -> None:
+        with Session(engine) as session:
+            session.query(Room).where(Room.timestamp < datetime.datetime.now() - datetime.timedelta(days=days)).delete()
+            session.commit()
 
 all_tables = Base.__subclasses__()
 
