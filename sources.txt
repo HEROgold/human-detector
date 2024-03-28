@@ -1,1 +1,5 @@
 see for inspiration: https://github.com/saimj7/People-Counting-in-Real-Time
+
+Tracking:
+https://www.youtube.com/watch?v=2n4-s-9Lt7c
+https://github.com/zain18jan2000/Multiple-Object-Tracking-Using-Dlib-tracker/blob/main/tracker.py
