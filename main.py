@@ -72,7 +72,6 @@ class CameraSelector(tk.Tk):
             detections = cam.get_detections(frame)
             annotated_frame = cam.annotate_frame(frame, detections)
             cam.show_image(annotated_frame)
-        cam.stop()
 
 
 def main() -> None:

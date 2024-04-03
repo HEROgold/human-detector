@@ -1,5 +1,6 @@
 import cv2
 from cv2.typing import MatLike
+import keyboard
 import numpy as np
 import supervision as sv
 from ultralytics import YOLO
@@ -28,9 +29,8 @@ class Camera:
         When the after Camera.start() has been called, this will return the frames of the camera
         """
         while self._show_live:
-            # Break on Q press or quit button
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                self._show_live = False
+            if keyboard.is_pressed("q"):
+                self.stop()
 
             ret, frame = self.get_image()
             if not ret:
@@ -50,9 +50,6 @@ class Camera:
         self._show_live = True
 
     def get_image(self):
-        if not self._show_live:
-            raise ValueError("Camera is not showing live feed")
-
         return self.capture.read()
 
     def show_image(self, frame: MatLike | None = None):
