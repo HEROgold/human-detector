@@ -69,7 +69,8 @@ class CameraSelector(tk.Tk):
         cam = self.cameras[self.get_active_camera()]
         cam.start()
         for frame in cam.get_live_feed():
-            annotated_frame = cam.annotate_frame(frame)
+            detections = cam.get_detections(frame)
+            annotated_frame = cam.annotate_frame(frame, detections)
             cam.show_image(annotated_frame)
         cam.stop()
 
