@@ -7,6 +7,8 @@ from camera import Camera
 
 
 class CameraSelector(tk.Tk):
+    _max_cam_count = 5
+
     def __init__(self):
         super().__init__()
         self.title("Camera Selector")
@@ -14,7 +16,7 @@ class CameraSelector(tk.Tk):
         self.cameras: list[Camera] = []
         self._selected_camera = 0
 
-        count = self.get_camera_count()
+        count = self.get_max_cam_count()
         for i in range(count):  # Adjust range as needed
             cam = Camera(camera_id=i, name=f"Camera {i}")
             cap = cam.capture
@@ -42,7 +44,14 @@ class CameraSelector(tk.Tk):
     def button_click(self, index):
         self.set_active_camera(index)
         print(f"Selected camera {self.get_active_camera()}")
-        self.show_selected_camera()
+        self.show_selected_camera(self.cameras[self.get_active_camera()])
+
+        # from threading import Thread
+        # thread = threading.Thread(
+        #     target=self.show_selected_camera,
+        #     args=(self.cameras[self.get_active_camera()],)
+        # )
+        # thread.start()
 
     def get_active_camera(self):
         return self._selected_camera
@@ -52,7 +61,7 @@ class CameraSelector(tk.Tk):
 
     def get_camera_count(self):
         i = 0
-        max_idx = 6
+        max_idx = self._max_cam_count
         while True:
             if i >= max_idx:
                 break
@@ -70,9 +79,11 @@ class CameraSelector(tk.Tk):
         print(f"Found {i} cameras")
         return i
 
+    def get_max_cam_count(self):
+        return self._max_cam_count
 
-    def show_selected_camera(self):
-        cam = self.cameras[self.get_active_camera()]
+    @staticmethod
+    def show_selected_camera(cam: Camera):
         cam.start()
         for frame in cam.get_live_feed():
             detections = cam.get_detections(frame)

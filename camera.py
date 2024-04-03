@@ -31,6 +31,8 @@ class Camera:
         while self._show_live:
             if keyboard.is_pressed("q"):
                 self.stop()
+                cv2.destroyWindow(self.name)
+                return
 
             ret, frame = self.get_image()
             if not ret:
