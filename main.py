@@ -46,12 +46,6 @@ class CameraSelector(tk.Tk):
         print(f"Selected camera {self.get_active_camera()}")
         self.show_selected_camera(self.cameras[self.get_active_camera()])
 
-        # from threading import Thread
-        # thread = threading.Thread(
-        #     target=self.show_selected_camera,
-        #     args=(self.cameras[self.get_active_camera()],)
-        # )
-        # thread.start()
 
     def get_active_camera(self):
         return self._selected_camera
