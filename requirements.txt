@@ -1,6 +1,6 @@
 opencv-python==4.9.0.80
 supervision[desktop]==0.18.0
-ultralytics==8.1.22s
+ultralytics==8.1.22
 sqlalchemy==2.0.27
 keyboard==0.13.5
 pillow==9.0.1
