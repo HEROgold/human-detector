@@ -54,16 +54,22 @@ class CameraSelector(tk.Tk):
         i = 0
         max_idx = 6
         while True:
-            if i > max_idx:
+            if i >= max_idx:
                 break
 
-            cam = cv2.VideoCapture(0)
+            cam = cv2.VideoCapture(i)
+            if not cam.isOpened():
+                break
+
             ret, frame = cam.read()
-            if not ret or not cam.isOpened():
+
+            if not ret:
                 break
             i += 1
+
         print(f"Found {i} cameras")
         return i
+
 
     def show_selected_camera(self):
         cam = self.cameras[self.get_active_camera()]
