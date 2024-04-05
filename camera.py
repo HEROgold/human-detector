@@ -59,41 +59,46 @@ class Camera:
             cv2.imshow(self.name, frame)
             cv2.waitKey(1)
             return
-        ret, frame = self.get_image()
+        _, frame = self.get_image()
         cv2.imshow(self.name, frame)
         cv2.waitKey(1)
 
-    def get_detections(self, frame):
+    def get_detections(self, frame: MatLike):
         # Apply the model
         results = self.model(frame)[0]
-        detections = sv.Detections.from_ultralytics(results)
+        detections = sv.Detections.from_ultralytics(results) # type: ignore
 
         # Apply Filters
-        detections = detections[np.isin(detections.class_id, self.selected_classes)]
-        detections = detections[detections.confidence > self.confidence_threshold]
-        detections = detections[detections.class_id == self.selected_classes]
+        detections = detections[np.isin(detections.class_id, self.selected_classes)] # type: ignore
+        detections = detections[detections.confidence > self.confidence_threshold] # type: ignore
+        detections = detections[detections.class_id == self.selected_classes] # type: ignore
         detections: sv.Detections
         return detections
 
-    def count_detections(self, frame):
+    def count_detections(self, detections: sv.Detections | None = None):
         """
         Count the amount of humans inside the frame, and update database for this camera
         """
-        Room.add_counter(room_id=self.camera_id, count=self.get_detections(frame))
-        return len(self.get_detections(frame))
+        if not detections:
+            count = len(self.get_detections(self.get_image()[1]))
+        else:
+            count = len(detections)
+        
+        Room.add_counter(room_id=self.camera_id, count=count)
+        return count
 
     @classmethod
-    def annotate_frame(cls, frame: cv2.typing.MatLike, detections: sv.Detections) -> np.ndarray:
+    def annotate_frame(cls, frame: cv2.typing.MatLike, detections: sv.Detections):
         labels = [
             cls.model.names[class_id]
             for class_id
-            in detections.class_id
+            in detections.class_id # type: ignore
         ]
 
         labels_with_confidence = [
             f"{label}: {confidence:.2f}"
             for label, confidence
-            in zip(labels, detections.confidence)
+            in zip(labels, detections.confidence) # type: ignore
         ]
 
         annotated_image = cls.bounding_box_annotator.annotate(
@@ -122,7 +127,7 @@ def main() -> None:
     for frame in c.get_live_feed():
         labeled_img = c.annotate_frame(frame, c.get_detections(frame))
 
-        c.show_image(labeled_img)
+        c.show_image(labeled_img) # type: ignore
 
 
 if __name__ == "__main__":

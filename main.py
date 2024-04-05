@@ -37,11 +37,11 @@ class CameraSelector(tk.Tk):
             # Create a button with the frame as its image
             imgtk = ImageTk.PhotoImage(image=img)
             btn = tk.Button(self, image=imgtk, command=partial(self.button_click, i))
-            btn.image = imgtk  # Keep a reference to prevent GarbageCollection
+            btn.image = imgtk  # type: ignore # Keep a reference to prevent GarbageCollection
             btn.pack(side="left")
             self.buttons.append(btn)
 
-    def button_click(self, index):
+    def button_click(self, index: int):
         self.set_active_camera(index)
         print(f"Selected camera {self.get_active_camera()}")
         self.show_selected_camera(self.cameras[self.get_active_camera()])
@@ -50,7 +50,7 @@ class CameraSelector(tk.Tk):
     def get_active_camera(self):
         return self._selected_camera
 
-    def set_active_camera(self, index):
+    def set_active_camera(self, index: int):
         self._selected_camera = index
 
     def get_camera_count(self):
@@ -64,7 +64,7 @@ class CameraSelector(tk.Tk):
             if not cam.isOpened():
                 break
 
-            ret, frame = cam.read()
+            ret, _ = cam.read()
 
             if not ret:
                 break
@@ -79,11 +79,11 @@ class CameraSelector(tk.Tk):
     @staticmethod
     def show_selected_camera(cam: Camera):
         cam.start()
-        cam.count_detections()
         for frame in cam.get_live_feed():
             detections = cam.get_detections(frame)
+            cam.count_detections(detections)
             annotated_frame = cam.annotate_frame(frame, detections)
-            cam.show_image(annotated_frame)
+            cam.show_image(annotated_frame) # type: ignore
 
 
 def main() -> None:
