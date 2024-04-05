@@ -60,6 +60,7 @@ class CameraSelector(tk.Tk):
             if i >= max_idx:
                 break
 
+            print(f"Searching for camera {i}..")
             cam = cv2.VideoCapture(i)
             if not cam.isOpened():
                 break
