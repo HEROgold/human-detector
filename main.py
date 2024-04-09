@@ -36,7 +36,12 @@ class CameraSelector(tk.Tk):
 
             # Create a button with the frame as its image
             imgtk = ImageTk.PhotoImage(image=img)
-            btn = tk.Button(self, image=imgtk, command=partial(self.button_click, i))
+            btn = tk.Button(
+                self, image=imgtk,
+                command=partial(self.button_click, i),
+                width=250,
+                height=250
+            )
             btn.image = imgtk  # Keep a reference to prevent GarbageCollection
             btn.pack(side="left")
             self.buttons.append(btn)
