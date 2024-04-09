@@ -4,6 +4,7 @@ import keyboard
 import numpy as np
 import supervision as sv
 from ultralytics import YOLO
+from ultralytics.solutions import object_counter
 
 from database.tables import Room
 
@@ -14,12 +15,24 @@ class Camera:
     selected_classes = [0] # see https://stackoverflow.com/a/77479465
     bounding_box_annotator = sv.BoundingBoxAnnotator()
     label_annotator = sv.LabelAnnotator()
+    counter = object_counter.ObjectCounter()
 
     def __init__(self, camera_id: int, name: str):
         self.camera_id = camera_id
         self.name = name
         self.capture = cv2.VideoCapture(camera_id)
         self._show_live = False
+        self.counter.set_args(
+            view_img=False,
+            view_in_counts=False,
+            view_out_counts=False,
+            reg_pts=[
+                (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) // 2, 0),
+                (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) // 2, self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            ],
+            classes_names=self.model.names,
+            draw_tracks=True
+        )
 
     def __str__(self):
         return f"Camera {self.camera_id}: {self.name}"
