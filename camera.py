@@ -24,15 +24,24 @@ class Camera:
         self._show_live = False
         self.counter.set_args(
             view_img=False,
-            view_in_counts=False,
-            view_out_counts=False,
+            view_in_counts=True,
+            view_out_counts=True,
             reg_pts=[
-                (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) // 2, 0),
-                (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) // 2, self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                # (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) // 2, 0),
+                # (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) // 2, self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                (0, 240), (640, 240)
             ],
             classes_names=self.model.names,
             draw_tracks=True
         )
+
+        self.video_writer = cv2.VideoWriter(
+            "ml-video-output.avi",
+            cv2.VideoWriter_fourcc(*'mp4v'),
+            cv2.CAP_PROP_FPS,
+            (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT)
+        )
+        print(f"{self.camera_id=}, {cv2.CAP_PROP_FRAME_HEIGHT=}, {cv2.CAP_PROP_FRAME_WIDTH=}")
 
     def __str__(self):
         return f"Camera {self.camera_id}: {self.name}"
@@ -65,7 +74,11 @@ class Camera:
         self._show_live = True
 
     def get_image(self):
-        return self.capture.read()
+        ret, im0 = self.capture.read()
+        tracks = self.model.track(im0, persist=True, show=False, classes=self.selected_classes)
+        self.counter.start_counting(im0, tracks)
+        self.video_writer.write(im0)
+        return ret, im0
 
     def show_image(self, frame: MatLike | None = None):
         if frame is not None:
