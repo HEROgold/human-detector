@@ -1,3 +1,14 @@
 {
-    "python.analysis.typeCheckingMode": "off"
+    "python.analysis.typeCheckingMode": "off",
+    "cSpell.words": [
+        "delayfunc",
+        "fourcc",
+        "imshow",
+        "isin",
+        "ndarray",
+        "timefunc",
+        "ultralytics",
+        "YOLO",
+        "yolov"
+    ]
 }
