@@ -5,6 +5,8 @@ from PIL import Image, ImageTk
 
 from camera import Camera
 
+# TODO: Maak een ui om een camera aan te passen bijvoorbeeld (naam, kamer, zone)
+
 
 class CameraSelector(tk.Tk):
     _max_cam_count = 5
