@@ -1,10 +1,11 @@
-import datetime
 import logging
+import random
+from typing import TYPE_CHECKING, List
 
 import sqlalchemy
 from sqlalchemy import (
+    ForeignKey,
     Integer,
-    DateTime,
     String
 )
 from sqlalchemy.orm import (
@@ -12,9 +13,11 @@ from sqlalchemy.orm import (
     Mapped,
     Session,
     mapped_column,
-    relationship
+    relationship,
 )
 
+if TYPE_CHECKING:
+    from camera import Camera as CameraObj
 
 logger: logging.Logger = logging.getLogger("sqlalchemy.engine")
 
@@ -37,36 +40,53 @@ class Room(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     room_name: Mapped[str] = mapped_column(String(255))
-    room_id: Mapped[int] = mapped_column(Integer)
-    human_count: Mapped[int] = mapped_column(Integer, default=0)
-    # timestamp: Mapped[datetime.datetime] = mapped_column(DateTime)
-    camera: Mapped["Camera"] = relationship("Camera", back_populates="room")
+    cameras: Mapped[List["Camera"]] = relationship(back_populates="room")
 
-
-    @classmethod
-    def add_counter(cls, room_id: int, count: int) -> None:
+    @property
+    def human_count(self) -> int:
+        """
+        calculates this value when queried, on the python side. not visible in database
+        
+        Returns
+        -------
+        :class:`int`
+            _description_
+        """
         with Session(engine) as session:
-            session.add(cls(room_id=room_id, human_count=count, timestamp=datetime.datetime.now()))
-            session.commit()
-
-    def clear_older_than(self, days: int) -> None:
-        with Session(engine) as session:
-            session.query(Room).where(Room.timestamp < datetime.datetime.now() - datetime.timedelta(days=days)).delete()
-            session.commit()
+            a = session.query(Camera.count).where(Camera.room_id == self.id).all()
+            return sum([i[0] for i in a])
 
 class Zone(Base):
     __tablename__ = "zone"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    zone_name: Mapped[str] = mapped_column(String(255))
+    # cameras: Mapped[List["Camera"]] = relationship()
 
 
 class Camera(Base):
     __tablename__ = "camera"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    camera_name: Mapped[str] = mapped_column(String(255))
+    count: Mapped[int] = mapped_column(Integer, default=0)
+    room_id: Mapped[int] = mapped_column(ForeignKey(Room.id))
+    # zones: Mapped[List["Zone"]] = relationship()
 
-    room: Mapped["Room"] = relationship("Room", back_populates="camera")
+    room: Mapped["Room"] = relationship(back_populates="cameras")
+
+    @classmethod
+    def add_counter(cls, camera: "CameraObj") -> None:
+        with Session(engine) as session:
+            if cam := session.query(cls).where(cls.id == camera.camera_id).first():
+                cam.count = camera.total_count
+                session.commit()
+                return
+            session.add(cls(room_id=cls.id, count=camera.total_count))
+            session.commit()
 
 
-def setup_rooms():
+def test_database():
     room_names = [
         # Verdieping 1
         "Onderwijs ruimte 1",
@@ -85,23 +105,45 @@ def setup_rooms():
         "Keuken",
         "Presentatie ruimte",
         "Garderobe",
-        
     ]
+    zones = [
+        "Hoofdingang",
+        "Achteruitgang",
+        "Toiletten",
+        "Dakterras",
+        "Kantine",
+        "Keuken",
+        "Presentatie ruimte",
+        "Garderobe",
+    ]
+    cameras = [
+        f"Camera {i}" for i in range(20)
+    ]
+
+    db_rooms = []
+    db_zones = []
+    db_cams = []
 
     with Session(engine) as session:
         for room in room_names:
-            session.add(Room(room_name=room))
+            db_rooms.append(Room(room_name=room))
+        for zone in zones:
+            db_zones.append(Zone(zone_name=zone))
+
+        session.add_all(db_rooms + db_zones)
+
+        for cam in cameras:
+            random_room_id = random.choice(session.query(Room).all()).id or 0
+            db_cams.append(Camera(camera_name=cam, room_id=random_room_id, count=random.randint(0, 1000)))
+        session.add_all(db_cams)
         session.commit()
 
+        for i in session.query(Room).all():
+            print(f"{i=}, {i.human_count=}")
 
-all_tables = Base.__subclasses__()
 
-try:
-    with Session(engine) as session:
-        for i in all_tables:
-            logger.debug(f"Checking for existing database table: {i}")
-            session.query(i).first()
-except Exception as e:
-    logger.exception(f"Error getting all tables: {e}")
-    """Should only run max once per startup, creating missing tables"""
-    Base().metadata.create_all(engine)
+Base().metadata.create_all(engine)
+
+
+if __name__ == "__main__":
+    test_database()
