@@ -1,3 +1,4 @@
+import random
 import cv2
 import keyboard
 import numpy as np
@@ -147,4 +148,5 @@ class Camera:
 
     @property
     def total_count(self):
+        # return random.randint(0, 100) # For testing purposes
         return self.counter.in_counts - self.counter.out_counts
