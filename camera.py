@@ -1,8 +1,9 @@
 import cv2
-from cv2.typing import MatLike
 import keyboard
 import numpy as np
+import schedule
 import supervision as sv
+from cv2.typing import MatLike
 from ultralytics import YOLO
 from ultralytics.solutions import object_counter
 
@@ -15,14 +16,23 @@ class Camera:
     selected_classes = [0] # see https://stackoverflow.com/a/77479465
     bounding_box_annotator = sv.BoundingBoxAnnotator()
     label_annotator = sv.LabelAnnotator()
-    counter = object_counter.ObjectCounter()
 
-    def __init__(self, camera_id: int, name: str, room_id: int):
+    def __init__(self, camera_id: int, name: str, room_id: int, scheduler: schedule.Scheduler):
         self.camera_id = camera_id
         self.name = name
         self.room_id = room_id
-        self.capture = cv2.VideoCapture(camera_id)
         self._show_live = False
+        self._auto_update_db = True
+        self.capture = cv2.VideoCapture(camera_id)
+        self.counter = object_counter.ObjectCounter()
+        self.scheduler = scheduler
+        self.video_writer = cv2.VideoWriter(
+            "ml-video-output.avi",
+            cv2.VideoWriter_fourcc(*'mp4v'),
+            cv2.CAP_PROP_FPS,
+            (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT)
+        )
+
         self.counter.set_args(
             view_img=False,
             view_in_counts=True,
@@ -36,13 +46,8 @@ class Camera:
             draw_tracks=True
         )
 
-        self.video_writer = cv2.VideoWriter(
-            "ml-video-output.avi",
-            cv2.VideoWriter_fourcc(*'mp4v'),
-            cv2.CAP_PROP_FPS,
-            (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT)
-        )
-        print(f"{self.camera_id=}, {cv2.CAP_PROP_FRAME_HEIGHT=}, {cv2.CAP_PROP_FRAME_WIDTH=}")
+        self.scheduler.every(5).seconds.do(self.update_db_counter)
+        print(f"{self.__dict__=}, {cv2.CAP_PROP_FRAME_HEIGHT=}, {cv2.CAP_PROP_FRAME_WIDTH=}")
 
     def __str__(self):
         return f"Camera {self.camera_id}: {self.name}"
@@ -104,10 +109,15 @@ class Camera:
 
     def count_detections(self, frame):
         """
-        Count the amount of humans inside the frame, and update database for this camera
+        Count the amount of humans inside the frame
+        """
+        return len(self.get_detections(frame))
+
+    def update_db_counter(self):
+        """
+        Update the database with the new count of humans in the room
         """
         DbCamera.update_counter(self)
-        return len(self.get_detections(frame))
 
     @classmethod
     def annotate_frame(cls, frame: cv2.typing.MatLike, detections: sv.Detections) -> np.ndarray:

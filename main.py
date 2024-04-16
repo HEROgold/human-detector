@@ -2,6 +2,7 @@ from functools import partial
 import cv2
 import tkinter as tk
 from PIL import Image, ImageTk
+from schedule import Scheduler
 
 from camera import Camera
 
@@ -17,10 +18,11 @@ class CameraSelector(tk.Tk):
         self.buttons: list[tk.Button] = []
         self.cameras: list[Camera] = []
         self._selected_camera = 0
+        self.scheduler = Scheduler()
 
         count = self.get_max_cam_count()
         for i in range(count):  # Adjust range as needed
-            cam = Camera(camera_id=i, name=f"Camera {i}")
+            cam = Camera(camera_id=i, name=f"Camera {i}", room_id=i, scheduler=self.scheduler)
             cap = cam.capture
 
             self.cameras.append(cam)
@@ -48,11 +50,14 @@ class CameraSelector(tk.Tk):
             btn.pack(side="left")
             self.buttons.append(btn)
 
+    def run_camera_scheduler(self):
+        self.scheduler.run_pending()
+        self.after(5000, self.run_camera_scheduler)
+
     def button_click(self, index):
         self.set_active_camera(index)
         print(f"Selected camera {self.get_active_camera()}")
         self.show_selected_camera(self.cameras[self.get_active_camera()])
-
 
     def get_active_camera(self):
         return self._selected_camera
@@ -60,7 +65,7 @@ class CameraSelector(tk.Tk):
     def set_active_camera(self, index):
         self._selected_camera = index
 
-    def get_camera_count(self):
+    def find_camera_count(self):
         i = 0
         max_idx = self._max_cam_count
         while True:
@@ -91,12 +96,12 @@ class CameraSelector(tk.Tk):
             detections = cam.get_detections(frame)
             annotated_frame = cam.annotate_frame(frame, detections)
             cam.show_image(annotated_frame)
-            # cam.count_detections(frame)
             # cam.show_image(frame)
 
 
 def main() -> None:
     app = CameraSelector()
+    app.run_camera_scheduler()
     app.mainloop()
 
 
