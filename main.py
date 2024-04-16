@@ -99,10 +99,10 @@ class CameraSelector(tk.Tk):
         cam.start()
         # cam.count_detections()
         for frame in cam.get_live_feed():
-            detections = cam.get_detections(frame)
-            annotated_frame = cam.annotate_frame(frame, detections)
-            cam.show_image(annotated_frame)
-            # cam.track()
+            # detections = cam.get_detections(frame)
+            # annotated_frame = cam.annotate_frame(frame, detections)
+            # cam.show_image(annotated_frame)
+            cam.show_image(cam.track())
 
 
 def main() -> None:
