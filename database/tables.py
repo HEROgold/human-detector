@@ -76,13 +76,21 @@ class Camera(Base):
     room: Mapped["Room"] = relationship(back_populates="cameras")
 
     @classmethod
-    def add_counter(cls, camera: "CameraObj") -> None:
+    def update_counter(cls, camera: "CameraObj") -> None:
+        """
+        Update the database with the new count of humans in the room
+        
+        Parameters
+        -----------
+        :param:`camera`:
+            The camera object to update the database with
+        """
         with Session(engine) as session:
             if cam := session.query(cls).where(cls.id == camera.camera_id).first():
                 cam.count = camera.total_count
                 session.commit()
                 return
-            session.add(cls(room_id=cls.id, count=camera.total_count))
+            session.add(cls(camera_name=camera.camera_id, room_id=camera.room_id, count=camera.total_count))
             session.commit()
 
 
