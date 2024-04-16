@@ -4,13 +4,15 @@ import logging
 import sqlalchemy
 from sqlalchemy import (
     Integer,
-    DateTime
+    DateTime,
+    String
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     Session,
     mapped_column,
+    relationship
 )
 
 
@@ -34,9 +36,11 @@ class Room(Base):
     __tablename__ = "room"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    room_name: Mapped[str] = mapped_column(String(255))
     room_id: Mapped[int] = mapped_column(Integer)
     human_count: Mapped[int] = mapped_column(Integer, default=0)
-    timestamp: Mapped[datetime.datetime] = mapped_column(DateTime)
+    # timestamp: Mapped[datetime.datetime] = mapped_column(DateTime)
+    camera: Mapped["Camera"] = relationship("Camera", back_populates="room")
 
 
     @classmethod
@@ -49,6 +53,46 @@ class Room(Base):
         with Session(engine) as session:
             session.query(Room).where(Room.timestamp < datetime.datetime.now() - datetime.timedelta(days=days)).delete()
             session.commit()
+
+class Zone(Base):
+    __tablename__ = "zone"
+
+
+class Camera(Base):
+    __tablename__ = "camera"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    room: Mapped["Room"] = relationship("Room", back_populates="camera")
+
+
+def setup_rooms():
+    room_names = [
+        # Verdieping 1
+        "Onderwijs ruimte 1",
+        "Onderwijs ruimte 2",
+        "Premium partners 1",
+        "Server ruimte 1",
+        "It 14",
+        "Toiletten 1",
+        "Toiletten 2",
+        "Dakterras 1",
+        "Dakterras 2",
+        # Begane grond
+        "IT 05",
+        "Premium partners 2",
+        "Kantine",
+        "Keuken",
+        "Presentatie ruimte",
+        "Garderobe",
+        
+    ]
+
+    with Session(engine) as session:
+        for room in room_names:
+            session.add(Room(room_name=room))
+        session.commit()
+
 
 all_tables = Base.__subclasses__()
 
