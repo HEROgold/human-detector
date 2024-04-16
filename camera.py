@@ -81,11 +81,14 @@ class Camera:
         self._show_live = True
 
     def get_image(self):
-        ret, im0 = self.capture.read()
+        return self.capture.read()
+
+    def track(self):
+        _, im0 = self.get_image()
         tracks = self.model.track(im0, persist=True, show=False, classes=self.selected_classes)
         self.counter.start_counting(im0, tracks)
         self.video_writer.write(im0)
-        return ret, im0
+        return im0
 
     def show_image(self, frame: MatLike | None = None):
         if frame is not None:

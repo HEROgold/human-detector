@@ -52,7 +52,13 @@ class CameraSelector(tk.Tk):
 
     def run_camera_scheduler(self):
         self.scheduler.run_pending()
+
+        # for cam in self.cameras:
+            # _, img = cam.get_image()
+            # cam.count_detections(img)
+
         self.after(5000, self.run_camera_scheduler)
+
 
     def button_click(self, index):
         self.set_active_camera(index)
@@ -96,7 +102,7 @@ class CameraSelector(tk.Tk):
             detections = cam.get_detections(frame)
             annotated_frame = cam.annotate_frame(frame, detections)
             cam.show_image(annotated_frame)
-            # cam.show_image(frame)
+            # cam.track()
 
 
 def main() -> None:
