@@ -90,7 +90,7 @@ class Camera(Base):
                 cam.count = camera.total_count
                 session.commit()
                 return
-            session.add(cls(camera_name=camera.camera_id, room_id=camera.room_id, count=camera.total_count))
+            session.add(cls(id=camera.camera_id, camera_name=camera.camera_id, room_id=camera.room_id, count=camera.total_count))
             session.commit()
 
 
