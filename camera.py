@@ -6,7 +6,7 @@ import supervision as sv
 from ultralytics import YOLO
 from ultralytics.solutions import object_counter
 
-from database.tables import Room
+from database.tables import Camera as DbCamera
 
 
 class Camera:
@@ -17,9 +17,10 @@ class Camera:
     label_annotator = sv.LabelAnnotator()
     counter = object_counter.ObjectCounter()
 
-    def __init__(self, camera_id: int, name: str):
+    def __init__(self, camera_id: int, name: str, room_id: int):
         self.camera_id = camera_id
         self.name = name
+        self.room_id = room_id
         self.capture = cv2.VideoCapture(camera_id)
         self._show_live = False
         self.counter.set_args(
@@ -105,7 +106,7 @@ class Camera:
         """
         Count the amount of humans inside the frame, and update database for this camera
         """
-        Room.add_counter(room_id=self.camera_id, count=self.get_detections(frame))
+        DbCamera.update_counter(self)
         return len(self.get_detections(frame))
 
     @classmethod
@@ -134,22 +135,6 @@ class Camera:
 
         return annotated_image
 
-
-def main() -> None:
-    YOLO("yolov8n.pt", verbose=False)
-
-    c = Camera(0, "Room 0")
-    c2 = Camera(1, "Room 1")
-    c3 = Camera(2, "Room 2")
-
-    c.start()
-    c2.start()
-    c3.start()
-    for frame in c.get_live_feed():
-        labeled_img = c.annotate_frame(frame, c.get_detections(frame))
-
-        c.show_image(labeled_img)
-
-
-if __name__ == "__main__":
-    main()
+    @property
+    def total_count(self):
+        return self.counter.in_counts - self.counter.out_counts
