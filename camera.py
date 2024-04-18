@@ -41,7 +41,7 @@ class Camera:
             reg_pts=[
                 # (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) // 2, 0),
                 # (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) // 2, self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                (0, 240), (640, 240)
+                (320, 0), (320, 480)
             ],
             classes_names=self.model.names,
             draw_tracks=True
