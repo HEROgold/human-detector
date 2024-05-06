@@ -153,3 +153,15 @@ class Camera:
     def total_count(self):
         # return random.randint(0, 100) # For testing purposes
         return self.counter.in_counts - self.counter.out_counts
+
+
+def main() -> None:
+    cam = Camera("ML-People-Counter-main/assets/video.mp4", "Camera 0", 0, schedule.Scheduler())
+    cam.start()
+    for frame in cam.get_live_feed():
+        cam.count_detections(frame)
+        # cam.show_image(frame)
+
+
+if __name__ == "__main__":
+    main()
