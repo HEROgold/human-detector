@@ -50,7 +50,7 @@ class Camera:
         )
 
         self.scheduler.every(5).seconds.do(self.update_db_counter)
-        print(f"{self.__dict__=}, {cv2.CAP_PROP_FRAME_HEIGHT=}, {cv2.CAP_PROP_FRAME_WIDTH=}")
+        # print(f"{self.__dict__=}, {cv2.CAP_PROP_FRAME_HEIGHT=}, {cv2.CAP_PROP_FRAME_WIDTH=}")
 
     def __str__(self):
         return f"Camera {self.camera_id}: {self.name}"
