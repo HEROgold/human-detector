@@ -1,4 +1,6 @@
 import random
+from pathlib import Path
+
 import cv2
 import keyboard
 import numpy as np
@@ -158,11 +160,12 @@ class Camera:
 
 
 def main() -> None:
-    cam = Camera("ML-People-Counter-main/assets/video.mp4", "Camera 0", 0, schedule.Scheduler())
-    cam.start()
-    for frame in cam.get_live_feed():
-        cam.count_detections(frame)
-        # cam.show_image(frame)
+    for i in Path("test videos").glob("*"):
+        cam = Camera(i, "Camera 0", 0, schedule.Scheduler())
+        cam.start()
+        for frame in cam.get_live_feed():
+            cam.count_detections(frame)
+            # cam.show_image(frame)
 
 
 if __name__ == "__main__":
