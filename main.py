@@ -80,6 +80,7 @@ class CameraSelector(tk.Tk):
     @staticmethod
     def show_selected_camera(cam: Camera):
         cam.start()
+        # cam.count_detections()
         for frame in cam.get_live_feed():
             detections = cam.get_detections(frame)
             cam.count_detections(detections)
