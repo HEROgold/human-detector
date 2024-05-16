@@ -2,8 +2,11 @@ from functools import partial
 import cv2
 import tkinter as tk
 from PIL import Image, ImageTk
+from schedule import Scheduler
 
 from camera import Camera
+
+# TODO: Maak een ui om een camera aan te passen bijvoorbeeld (naam, kamer, zone)
 
 
 class CameraSelector(tk.Tk):
@@ -15,10 +18,11 @@ class CameraSelector(tk.Tk):
         self.buttons: list[tk.Button] = []
         self.cameras: list[Camera] = []
         self._selected_camera = 0
+        self.scheduler = Scheduler()
 
         count = self.get_max_cam_count()
         for i in range(count):  # Adjust range as needed
-            cam = Camera(camera_id=i, name=f"Camera {i}")
+            cam = Camera(camera_id=i, name=f"Camera {i}", room_id=i, scheduler=self.scheduler)
             cap = cam.capture
 
             self.cameras.append(cam)
@@ -36,16 +40,30 @@ class CameraSelector(tk.Tk):
 
             # Create a button with the frame as its image
             imgtk = ImageTk.PhotoImage(image=img)
-            btn = tk.Button(self, image=imgtk, command=partial(self.button_click, i))
-            btn.image = imgtk  # type: ignore # Keep a reference to prevent GarbageCollection
+            btn = tk.Button(
+                self, image=imgtk,
+                command=partial(self.button_click, i),
+                width=250,
+                height=250
+            )
+            btn.image = imgtk  # Keep a reference to prevent GarbageCollection
             btn.pack(side="left")
             self.buttons.append(btn)
+
+    def run_camera_scheduler(self):
+        self.scheduler.run_pending()
+
+        # for cam in self.cameras:
+            # _, img = cam.get_image()
+            # cam.count_detections(img)
+
+        self.after(5000, self.run_camera_scheduler)
+
 
     def button_click(self, index: int):
         self.set_active_camera(index)
         print(f"Selected camera {self.get_active_camera()}")
         self.show_selected_camera(self.cameras[self.get_active_camera()])
-
 
     def get_active_camera(self):
         return self._selected_camera
@@ -53,7 +71,7 @@ class CameraSelector(tk.Tk):
     def set_active_camera(self, index: int):
         self._selected_camera = index
 
-    def get_camera_count(self):
+    def find_camera_count(self):
         i = 0
         max_idx = self._max_cam_count
         while True:
@@ -82,14 +100,15 @@ class CameraSelector(tk.Tk):
         cam.start()
         # cam.count_detections()
         for frame in cam.get_live_feed():
-            detections = cam.get_detections(frame)
-            cam.count_detections(detections)
-            annotated_frame = cam.annotate_frame(frame, detections)
-            cam.show_image(annotated_frame) # type: ignore
+            # detections = cam.get_detections(frame)
+            # annotated_frame = cam.annotate_frame(frame, detections)
+            # cam.show_image(annotated_frame)
+            cam.show_image(cam.track())
 
 
 def main() -> None:
     app = CameraSelector()
+    app.run_camera_scheduler()
     app.mainloop()
 
 

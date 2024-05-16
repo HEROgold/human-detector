@@ -3,5 +3,16 @@
     "cSpell.words": [
         "fromarray",
         "imgtk"
+    ],
+    "cSpell.words": [
+        "delayfunc",
+        "fourcc",
+        "imshow",
+        "isin",
+        "ndarray",
+        "timefunc",
+        "ultralytics",
+        "YOLO",
+        "yolov"
     ]
 }
