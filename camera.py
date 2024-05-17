@@ -161,7 +161,7 @@ class Camera:
 
 def main() -> None:
     for i in Path("test videos").glob("*"):
-        cam = Camera(i, "Camera 0", 0, schedule.Scheduler())
+        cam = Camera(str(i), "Camera 0", 0, schedule.Scheduler())
         cam.start()
         for frame in cam.get_live_feed():
             cam.count_detections(frame)
