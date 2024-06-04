@@ -13,7 +13,7 @@ from database.tables import Camera as DbCamera
 
 
 class Camera:
-    model = YOLO("yolov8n.pt", verbose=False)
+    model = YOLO("yolov8n_openvino_model/", task="detect", verbose=False)
     confidence_threshold = 0.5
     selected_classes = [0] # see https://stackoverflow.com/a/77479465
     bounding_box_annotator = sv.BoundingBoxAnnotator()

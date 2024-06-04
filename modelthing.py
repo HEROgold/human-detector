@@ -2,8 +2,8 @@ from ultralytics import YOLO
 
 # Generate the model
 
-# model = YOLO("yolov8n.pt")
-# model.export(format="openvino", imgsz=640)
+model = YOLO("yolov8n.pt")
+model.export(format="openvino", imgsz=640)
 
 # model.export(format="openvino", imgsz=640, half=True)
 # model.export(format="openvino", imgsz=640, int8=True, data="coco128.yaml")
